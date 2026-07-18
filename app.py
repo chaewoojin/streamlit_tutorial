@@ -73,6 +73,7 @@ st.markdown(
       .stepno {{
         font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
         letter-spacing: 0.16em; color: {CARDINAL}; text-transform: uppercase;
+        margin-top: 1rem !important;
       }}
       .check {{
         font-size: 0.9rem; color: {MUTED}; border-top: 1px solid {RULE};
@@ -106,7 +107,7 @@ st.markdown(
       .pair .card {{ border-top: 2px solid {CARDINAL}; padding-top: 0.7rem; }}
       .pair .card:nth-child(2) {{ border-top-color: {GOLD}; }}
       .pair .card .tag {{
-        font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+        font-family: 'JetBrains Mono', monospace; font-size: .85rem;
         letter-spacing: 0.14em; text-transform: uppercase; color: {MUTED};
         margin-bottom: 0.5rem;
       }}
@@ -114,6 +115,17 @@ st.markdown(
       @media (max-width: 640px) {{
         .pair {{ grid-template-columns: 1fr; gap: 1.1rem; }}
       }}
+
+      /* Result / Code badges above each demo() pane */
+      .demolabel {{
+        display: inline-block;
+        font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        padding: 0.18rem 0.6rem; border-radius: 4px;
+        margin-bottom: 0.6rem;
+      }}
+      .demolabel.result {{ background: {GOLD}40; color: {INK}; }}
+      .demolabel.code {{ background: {INK}; color: white; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -123,9 +135,9 @@ st.markdown(
 STEPS = [
     ("Intro", 3),
     ("Set up", 8),
-    ("One idea", 6),
+    ("Key idea", 6),
     ("Toolkit", 10),
-    ("Build", 22),
+    ("Exercise", 22),
     ("Ship", 8),
     ("Look up", 3),
 ]
@@ -138,22 +150,27 @@ def brk(label: str = ""):
     st.markdown(f'<div class="brk"><i></i>{tag}<u></u></div>', unsafe_allow_html=True)
 
 
+def demo_label(kind: str):
+    """A small colored badge marking a Result or Code pane."""
+    st.markdown(f'<span class="demolabel {kind.lower()}">{kind}</span>', unsafe_allow_html=True)
+
+
 def demo(code: str, stacked: bool = False):
     """Run a snippet and show the exact source. Side by side, or result above code."""
     code = textwrap.dedent(code).strip()
     if stacked:
-        st.caption("Result")
+        demo_label("Result")
         exec(code, globals())  # teaching device only
-        st.caption("Code")
+        demo_label("Code")
         st.code(code, language="python")
     else:
         a, b = st.columns(2)
         with a:
-            st.caption("Code")
-            st.code(code, language="python")
-        with b:
-            st.caption("Result")
+            demo_label("Result")
             exec(code, globals())  # teaching device only
+        with b:
+            demo_label("Code")
+            st.code(code, language="python")
 
 
 @st.cache_data
@@ -223,10 +240,19 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-choice = st.segmented_control("Section", NAMES, default="Intro", key="nav",
-                              label_visibility="collapsed")
-current = choice or "Intro"
+def _sync_section():
+    st.query_params["section"] = st.session_state.nav
+
+
+initial_section = st.query_params.get("section", "Intro")
+if initial_section not in NAMES:
+    initial_section = "Intro"
+
+st.segmented_control("Section", NAMES, default=initial_section, key="nav",
+                     label_visibility="collapsed", on_change=_sync_section)
+current = st.session_state.nav or initial_section
 idx = NAMES.index(current)
+st.query_params["section"] = current
 
 bars = "".join(
     f'<span style="flex:{m}" class="{"on" if i == idx else "done" if i < idx else ""}"></span>'
@@ -307,9 +333,9 @@ if current == "Intro":
     st.markdown(
         """
         **Set up** · get it running on your laptop  
-        **One idea** · the single concept that explains Streamlit's behavior  
+        **Key idea** · the single concept that explains Streamlit's behavior  
         **Toolkit** · the ten functions that cover most apps  
-        **Build** · a real app, six small steps  
+        **Exercise** · a real app, six small steps  
         **Ship** · a public URL you can send to anyone
         """
     )
@@ -317,7 +343,7 @@ if current == "Intro":
 
 # ---------------------------------------------------------------------------
 elif current == "Set up":
-    st.title("Set up")
+    brk("Set up")
     st.markdown('<p class="lede">Four commands. Everything after this assumes they worked.</p>',
                 unsafe_allow_html=True)
 
@@ -342,7 +368,7 @@ elif current == "Set up":
     st.markdown('<p class="check">Your prompt now starts with (.venv). That is how you know it worked.</p>',
                 unsafe_allow_html=True)
 
-    st.markdown("## Then run something")
+    brk("Run a test app")
     st.write("Save this as `app.py`:")
     st.code('import streamlit as st\n\nst.title("It works")', language="python")
     st.code("streamlit run app.py", language="bash")
@@ -350,6 +376,7 @@ elif current == "Set up":
         "Your browser opens at `localhost:8501`. That terminal is now your app — leave it running, "
         "`Ctrl+C` stops it."
     )
+    brk("Edit and rerun")
 
     st.markdown(
         '<div class="note">Edit the file, hit save, and the page offers to rerun. '
@@ -372,8 +399,8 @@ elif current == "Set up":
         )
 
 # ---------------------------------------------------------------------------
-elif current == "One idea":
-    st.title("Your script reruns for every interaction.")
+elif current == "Key idea":
+    brk("Your script reruns for every interaction.")
     st.markdown(
         '<p class="lede">Every time anyone touches a widget, Streamlit runs your file again '
         'from line 1, with the new value in place.</p>',
@@ -421,7 +448,7 @@ elif current == "One idea":
 
 # ---------------------------------------------------------------------------
 elif current == "Toolkit":
-    st.title("Ten functions")
+    brk("Ten functions")
     st.markdown('<p class="lede">Enough for most apps. Everything else, you look up.</p>',
                 unsafe_allow_html=True)
 
@@ -435,7 +462,8 @@ elif current == "Toolkit":
             st.write("st.write takes almost anything — text, numbers, DataFrames.")
             st.metric("Seats free", 128, "+14")
             st.dataframe(study_spots(4)[["spot", "seats", "rating"]], hide_index=True)
-            """
+            """,
+            stacked=True
         )
     elif group == "Ask":
         demo(
@@ -444,7 +472,8 @@ elif current == "Toolkit":
             seats = st.slider("Minimum seats", 0, 100, 20, key="t_slider")
             quiet = st.checkbox("Silent only", key="t_check")
             st.write(f"Looking for {seats}+ seats in {city}." + (" Silent." if quiet else ""))
-            """
+            """,
+            stacked=True
         )
     elif group == "Chart":
         demo(
@@ -452,7 +481,8 @@ elif current == "Toolkit":
             df = study_spots()
             st.bar_chart(df.groupby("building")["seats"].sum())
             st.map(df, size=15)
-            """
+            """,
+            stacked=True
         )
     else:
         demo(
@@ -466,7 +496,8 @@ elif current == "Toolkit":
 
             with st.expander("Details"):
                 st.write("Hidden until clicked.")
-            """
+            """,
+            stacked=True
         )
 
     st.markdown(
@@ -477,8 +508,8 @@ elif current == "Toolkit":
     )
 
 # ---------------------------------------------------------------------------
-elif current == "Build":
-    st.title("Build it")
+elif current == "Exercise":
+    brk("Let's exercise!    ")
     st.markdown(
         '<p class="lede">One app, six steps. Add a few lines, save, watch the browser.</p>',
         unsafe_allow_html=True,
@@ -593,7 +624,7 @@ elif current == "Build":
         st.success("That's the app. Take it to **Ship** and put it online.", icon="✅")
 
     st.divider()
-    st.markdown("## Then make it yours")
+    brk("Then make it yours")
     st.write("This is the assignment. Same six steps, your own subject.")
     st.markdown(
         """
@@ -607,7 +638,7 @@ elif current == "Build":
 
 # ---------------------------------------------------------------------------
 elif current == "Ship":
-    st.title("Ship")
+    brk("Ship")
     st.markdown('<p class="lede">GitHub, then one form. Free, and it stays up.</p>',
                 unsafe_allow_html=True)
 
@@ -653,7 +684,7 @@ elif current == "Ship":
 
 # ---------------------------------------------------------------------------
 else:
-    st.title("Look it up")
+    brk("Look it up")
     st.markdown(
         '<p class="lede">This is the actual skill. You will use these more than anything '
         'you memorized today.</p>',
@@ -669,23 +700,6 @@ else:
 
         **streamlit.io/gallery** — apps with source. Read one before you design yours.
         """
-    )
-
-    st.markdown("## Card")
-    st.code(
-        """
-        st.title / write / metric / caption
-        st.dataframe(df)            interactive table
-        st.selectbox / slider / checkbox / multiselect
-        st.text_input / file_uploader / download_button
-        st.bar_chart / line_chart / map
-        st.columns(2) / st.tabs([..]) / st.sidebar / st.expander
-        st.session_state["k"]       survives reruns
-        @st.cache_data              don't reload on every rerun
-        st.stop()                   quit the script early
-        st.secrets["KEY"]           API keys
-        """,
-        language="text",
     )
 
     st.markdown(
