@@ -33,7 +33,7 @@ st.markdown(
 
       section[data-testid="stSidebar"] {{ display: none; }}
       header[data-testid="stHeader"] {{ background: transparent; }}
-      .block-container {{ padding-top: 5.5rem; padding-bottom: 5rem; max-width: 46rem; }}
+      .block-container {{ padding-top: 5.5rem; padding-bottom: 5rem; max-width: 48rem; }}
 
       .wordmark {{
         font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
@@ -79,6 +79,41 @@ st.markdown(
         padding-top: 0.6rem; margin-top: 0.2rem;
       }}
       hr {{ border-color: {RULE} !important; }}
+
+      /* section break: a hairline with a small cardinal tick on the left */
+      .brk {{
+        font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+        display: flex; align-items: center; gap: 0;
+        margin-top: 3rem; margin-bottom: 0.5rem;
+      }}
+      .brk i {{ display: block; height: 2px; width: 34px; background: {CARDINAL}; }}
+      .brk u {{ display: block; height: 1px; flex: 1; background: {RULE}; text-decoration: none; }}
+      .brk s {{
+        font-family: 'JetBrains Mono', monospace; font-size: 1.2rem;
+        letter-spacing: 0.14em; text-transform: uppercase; color: {MUTED};
+        text-decoration: none; padding-left: 0.7rem;
+      }}
+      /* a heading right after a break shouldn't add its own top gap on top of the break's */
+      div[data-testid="stElementContainer"]:has(.brk) + div[data-testid="stElementContainer"] h2 {{
+        margin-top: 0 !important;
+      }}
+
+      /* two labeled cards, side by side */
+      .pair {{
+        display: grid; grid-template-columns: 1fr 1fr; gap: 1.7rem;
+        margin: 1.5rem 0;
+      }}
+      .pair .card {{ border-top: 2px solid {CARDINAL}; padding-top: 0.7rem; }}
+      .pair .card:nth-child(2) {{ border-top-color: {GOLD}; }}
+      .pair .card .tag {{
+        font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+        letter-spacing: 0.14em; text-transform: uppercase; color: {MUTED};
+        margin-bottom: 0.5rem;
+      }}
+      .pair .card p {{ margin: 0; font-size: 0.97rem; line-height: 1.6; color: {INK}; }}
+      @media (max-width: 640px) {{
+        .pair {{ grid-template-columns: 1fr; gap: 1.1rem; }}
+      }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -86,7 +121,7 @@ st.markdown(
 
 # ---------------------------------------------------------------------------
 STEPS = [
-    ("Why", 3),
+    ("Intro", 3),
     ("Set up", 8),
     ("One idea", 6),
     ("Toolkit", 10),
@@ -97,14 +132,28 @@ STEPS = [
 NAMES = [s[0] for s in STEPS]
 
 
-def demo(code: str):
-    """Run a snippet and show the exact source beside it."""
+def brk(label: str = ""):
+    """A section break — hairline rule with an optional label."""
+    tag = f"<s>{label}</s>" if label else ""
+    st.markdown(f'<div class="brk"><i></i>{tag}<u></u></div>', unsafe_allow_html=True)
+
+
+def demo(code: str, stacked: bool = False):
+    """Run a snippet and show the exact source. Side by side, or result above code."""
     code = textwrap.dedent(code).strip()
-    a, b = st.tabs(["Result", "Code"])
-    with b:
-        st.code(code, language="python")
-    with a:
+    if stacked:
+        st.caption("Result")
         exec(code, globals())  # teaching device only
+        st.caption("Code")
+        st.code(code, language="python")
+    else:
+        a, b = st.columns(2)
+        with a:
+            st.caption("Code")
+            st.code(code, language="python")
+        with b:
+            st.caption("Result")
+            exec(code, globals())  # teaching device only
 
 
 @st.cache_data
@@ -174,9 +223,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-choice = st.segmented_control("Section", NAMES, default="Why", key="nav",
+choice = st.segmented_control("Section", NAMES, default="Intro", key="nav",
                               label_visibility="collapsed")
-current = choice or "Why"
+current = choice or "Intro"
 idx = NAMES.index(current)
 
 bars = "".join(
@@ -192,18 +241,41 @@ st.markdown(
 
 
 # ---------------------------------------------------------------------------
-if current == "Why":
-    st.title("You will not learn Streamlit today.")
+if current == "Intro":
+    st.title("Let's get started! 🕺")
     st.markdown(
-        '<p class="lede">You will build one working app, put it on the internet, '
+        '<p class="lede">Today, you will build one working app, put it on the internet, '
         'and learn how to look up everything else.</p>',
         unsafe_allow_html=True,
     )
 
+    brk("What is Streamlit")
+
+    st.markdown("## A Python script that happens to be a website")
     st.write(
-        "Streamlit turns a Python script into a web app. No HTML, no JavaScript, no server. "
-        "Here is a complete, working application:"
+        "Streamlit is a Python library for building web apps. You write an ordinary `.py` file — "
+        "the same kind you already write for analysis — and Streamlit renders it in a browser. "
+        "No HTML, no JavaScript, no server code, no front-end framework."
     )
+    st.markdown(
+        """
+        <div class="pair">
+          <div class="card">
+            <div class="tag">Where it fits</div>
+            <p>A notebook is for you; a Streamlit app is for someone else. The moment
+            you want a colleague, a PI, or a reviewer to <i>interact</i> with your data
+            rather than read your plots, that's the job Streamlit does.</p>
+          </div>
+          <div class="card">
+            <div class="tag">What you get for free</div>
+            <p>Widgets (sliders, dropdowns, file upload), interactive tables, charts,
+            maps, and a public URL — each one a single function call.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write("A whole app, in four lines:")
     demo(
         """
         import streamlit as st
@@ -212,15 +284,26 @@ if current == "Why":
         st.write("Hello 👋")
         """
     )
-
     st.markdown(
-        '<div class="note">Nobody memorizes this library. You write a line, run it, '
-        'see it, and search the docs when you need something new. That loop — not a feature '
-        'list — is what you are here to practice.</div>',
+        '<p class="check">Everything you see today is that same shape: a line of Python, '
+        'a thing on the page.</p>',
         unsafe_allow_html=True,
     )
 
-    st.markdown("## The hour")
+    brk("How to learn it")
+
+    st.markdown(
+        '<div class="note">Nobody memorizes every feature. '
+        'In practice, whenever you need something new, '
+        'you search the docs or ask GPT, write a line, run it, and see it. '
+        'So this app does not cover every feature available in Streamlit. ' \
+        'Instead, it shows you the end-to-end procedure of building a Streamlit app, which is what you will practice today. '
+        'Get familiar with the process, and you will be able to build any app you want. </div>',
+        unsafe_allow_html=True,
+    )
+
+    brk("The plan")
+
     st.markdown(
         """
         **Set up** · get it running on your laptop  
@@ -290,7 +373,7 @@ elif current == "Set up":
 
 # ---------------------------------------------------------------------------
 elif current == "One idea":
-    st.title("Your script reruns. All of it.")
+    st.title("Your script reruns for every interaction.")
     st.markdown(
         '<p class="lede">Every time anyone touches a widget, Streamlit runs your file again '
         'from line 1, with the new value in place.</p>',
@@ -302,7 +385,8 @@ elif current == "One idea":
         st.write("Script ran at", time.strftime("%H:%M:%S"))
         n = st.slider("Move me", 0, 100, 25, key="d_slider")
         st.write("Value:", n)
-        """
+        """,
+        stacked=True,
     )
     st.markdown('<p class="check">Move the slider. The timestamp changes — because line one ran again.</p>',
                 unsafe_allow_html=True)
@@ -612,4 +696,4 @@ else:
     )
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.caption("2026 USC Summer Scholars — built with Streamlit. Source: https://github.com/yourusername/streamlit_tutorial")
+st.caption("2026 USC Summer Scholars — built with Streamlit. Source: https://docs.streamlit.io/")
