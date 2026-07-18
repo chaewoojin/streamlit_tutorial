@@ -138,7 +138,7 @@ STEPS = [
     ("Key idea", 6),
     ("Toolkit", 10),
     ("Exercise", 22),
-    ("Ship", 8),
+    ("Deploy", 8),
     ("Look up", 3),
 ]
 NAMES = [s[0] for s in STEPS]
@@ -336,7 +336,7 @@ if current == "Intro":
         **Key idea** · the single concept that explains Streamlit's behavior  
         **Toolkit** · the ten functions that cover most apps  
         **Exercise** · a real app, six small steps  
-        **Ship** · a public URL you can send to anyone
+        **Deploy** · a public URL you can send to anyone
         """
     )
     st.caption("Then you do the same thing with your own project.")
@@ -621,7 +621,7 @@ elif current == "Exercise":
     st.markdown(f'<p class="check">You should see → {expect}</p>', unsafe_allow_html=True)
 
     if step == "6":
-        st.success("That's the app. Take it to **Ship** and put it online.", icon="✅")
+        st.success("That's the app. Take it to **Deploy** and put it online.", icon="✅")
 
     st.divider()
     brk("Then make it yours")
@@ -637,8 +637,8 @@ elif current == "Exercise":
     st.caption("Scope it to one screen. If it takes more than an evening, it's too big.")
 
 # ---------------------------------------------------------------------------
-elif current == "Ship":
-    brk("Ship")
+elif current == "Deploy":
+    brk("Deploy it")
     st.markdown('<p class="lede">GitHub, then one form. Free, and it stays up.</p>',
                 unsafe_allow_html=True)
 
